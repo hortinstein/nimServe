@@ -2,7 +2,7 @@
 # uses this file as the main entry point of the application.
 
 import nimServepkg/submodule
-import nimServepkg/taskqueue
+import nimServepkg/taskTable
 
 import asyncdispatch, asynchttpserver, uri, urlly, zippy
 
@@ -33,6 +33,6 @@ proc serveTasks(taskTable: TaskTable) {.async.} =
 
 
 when isMainModule:
-  let taskTable = newTaskTable() 
-  discard serveTasks(taskTable)
+  let tskTable = newTaskTable() 
+  discard serveTasks(tskTable)
   echo(getWelcomeMessage())

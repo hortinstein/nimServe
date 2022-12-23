@@ -7,6 +7,22 @@
 
 import unittest
 
-import nimServepkg/submodule
-test "correct welcome":
-  check getWelcomeMessage() == "Hello, World!"
+import nimServepkg/taskTable
+
+import nimServepkg/taskTable
+suite "description for this stuff":
+  var tt = newTaskTable()
+  var task1 = newTask(1,"task1")
+  var task2 = newTask(2,"task2")
+  var task3 = newTask(3,"task3")
+
+  setup:
+    #echo "run before each test"
+    addTask(tt,task1)
+    addTask(tt,task2)
+    addTask(tt,task3)
+  teardown:
+    echo "run after each test"
+    
+  test "testing insert":
+    echo tt

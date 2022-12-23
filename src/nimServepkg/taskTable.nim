@@ -22,13 +22,10 @@ proc newTask*(taskNum: int, req: string): Task =
 
 type
   TaskTable* = object
-    tasks*: SharedTable[string, Task]
+    tasks*: Table[string, Task]
 
 proc newTaskTable*(): TaskTable =
-  var table: SharedTable[string, Task]   
-  init(table)
-  return TaskTable(tasks: table)
-
+  return TaskTable(tasks: initTable[string, Task]())
 
 proc addTask*(taskTable: var TaskTable, task: Task) =
   var id = task.taskId
@@ -36,7 +33,7 @@ proc addTask*(taskTable: var TaskTable, task: Task) =
 
 proc addTaskResp*(taskTable: var TaskTable, taskId: string, resp: string) =
   try:
-    taskTable.tasks.mget(taskId).resp = resp
+    taskTable.tasks[taskId].resp = resp
   except KeyError: #TODO better error handling
     echo "KeyError adding resp"
 
@@ -46,9 +43,9 @@ proc rmTask*(taskTable: var TaskTable, task: Task) =
 proc getTaskResp*(taskTable: var TaskTable, taskId: string): Future[string] {.async.} =
   var id = taskId
   try:
-    while (taskTable.tasks.mget(id).resp == ""):
+    while (taskTable.tasks[id].resp == ""):
       await sleepAsync(1000)
   except KeyError: #TODO better error handling
     echo " KeyError gettting resp"
     return ""
-  return taskTable.tasks.mget(id).resp
+  return taskTable.tasks[id].resp
