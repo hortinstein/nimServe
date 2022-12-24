@@ -6,11 +6,13 @@ description   = "A new awesome nimble package"
 license       = "MIT"
 srcDir        = "src"
 installExt    = @["nim"]
-bin           = @["nimServe"]
+bin           = @["nimReq"]
 
 
 # Dependencies
 
 requires "nim >= 1.6.8"
 requires "urlly"
+requires "flatty"
 requires "zippy"
+requires "puppy"
