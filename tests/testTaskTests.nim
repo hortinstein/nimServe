@@ -3,14 +3,14 @@ import tables
 import nimServepkg/taskTable
 import asyncdispatch, asynchttpserver, uri, urlly, zippy, flatty
 
-proc serveTasks(tt: TaskTable) {.async.} =
+proc serveTasks(tt: TaskTable) {.thread.} =
   proc cb(req: Request, tt: TaskTable) {.async.} =
     echo "got request ", $req
     case req.reqMethod
     of HttpGet:
       if req.url.path == "/":
-        echo "here"
         let taskId = getUnsentTask(tt)
+        echo "sending taskId:",taskId
         if taskId != "":
           await req.respond(Http200, toFlatty(tt.tasks[taskId]))
         else:
@@ -19,9 +19,8 @@ proc serveTasks(tt: TaskTable) {.async.} =
     of HttpPost:
       if req.url.path == "/":
         echo req.headers
-        echo "here2"
         echo req.body
-        # let resp = req.body.fromFlatty(Resp)
+        let resp = req.body.fromFlatty(Resp)
         #echo resp.taskId
         return
     else:
@@ -40,18 +39,18 @@ suite "tests the creation of a task queue":
   let t1 = newTask(1,"test1")
   let t2 = newTask(2,"test2")
   let t3 = newTask(3,"test3")
+
+  var t: Thread[TaskTable]
+  createThread[TaskTable](t,serveTasks, tt)
+
   setup:
     addTask(tt,t1)
     addTask(tt,t2)
     addTask(tt,t3)    
   # teardown:
-  #   rmTask(tt,t1.taskId)
-  #   rmTask(tt,t1.taskId)
-  #   rmTask(tt,t1.taskId)
-
-  discard serveTasks(tt)
 
   test "test task1":
+    echo "test1"
     addTask(tt,t1)
 
   test "test task2":
@@ -59,5 +58,5 @@ suite "tests the creation of a task queue":
   
   test "test task3":
     addTask(tt,t3)
-
+  joinThread(t)
   echo "suite teardown: run once after the tests"
