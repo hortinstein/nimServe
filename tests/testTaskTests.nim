@@ -21,15 +21,22 @@ proc serveTasks(tt: TaskTable, server: AsyncHttpServer) {.thread.} =
         echo req.headers
         echo req.body
         let resp = req.body.fromFlatty(Resp)
-        #echo resp.taskId
+        await req.respond(Http200, "")
         return
     else:
       discard
     await req.respond(Http404, "Not found.")
 
   if server.shouldAcceptRequest():
-    waitFor server.acceptRequest(proc (req: Request): Future[void] = cb(req, tt,server))
-
+    #what for retrieval of the task
+    waitFor server.acceptRequest(
+      proc (req: Request): Future[void] = cb(req, tt,server)
+    )
+    #wait for the post request
+    waitFor server.acceptRequest(
+      proc (req: Request): Future[void] = cb(req, tt,server)
+    )
+    
 suite "tests the creation of a task queue":
   var tt = newTaskTable()
   let t1 = newTask(1,"test1")

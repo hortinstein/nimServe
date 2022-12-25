@@ -5,21 +5,31 @@ import puppy
 import flatty
 import nimServepkg/taskTable
 
+import asyncdispatch
+
 when isMainModule:
   while true:
-    let task = fetch("http://127.0.0.1:8080")
-    echo task 
-    let dec = task.fromFlatty(Task)
+    try: 
+      echo "get task"
+      let task = fetch("http://127.0.0.1:8080")
+      echo task 
+      let dec = task.fromFlatty(Task)
+      
+      echo dec.req
+      let body = Resp(taskId: dec.taskId, resp: "Hello World")
     
-    echo dec.req
-    let body = Resp(taskId: dec.taskId, resp: "Hello World")
-    
-    let response = post(
-        "http://127.0.0.1:8080",
-        @[("Content-Type", "application/json")],
-        toFlatty(body)
-    )
+      echo "post response"
+      
+      let response = post(
+          "http://127.0.0.1:8080",
+          @[("Content-Type", "application/json")],
+          toFlatty(body)
+      )   
+      echo response.code
+      echo response.headers
+      echo response.body.len
+    except PuppyError:
+      waitFor sleepAsync(500)
+      continue
 
-    echo response.code
-    echo response.headers
-    echo response.body.len
+   
