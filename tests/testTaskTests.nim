@@ -3,8 +3,8 @@ import tables
 import nimServepkg/taskTable
 import asyncdispatch, asynchttpserver, uri, urlly, zippy, flatty
 
-proc serveTasks(tt: TaskTable) {.thread.} =
-  proc cb(req: Request, tt: TaskTable) {.async.} =
+proc serveTasks(tt: TaskTable, server: AsyncHttpServer) {.thread.} =
+  proc cb(req: Request, tt: TaskTable,server: AsyncHttpServer) {.async.} =
     echo "got request ", $req
     case req.reqMethod
     of HttpGet:
@@ -27,21 +27,19 @@ proc serveTasks(tt: TaskTable) {.thread.} =
       discard
     await req.respond(Http404, "Not found.")
 
-  let server = newAsyncHttpServer()
-  
-  waitFor server.serve(
-    Port(8080), 
-    proc (req: Request): Future[void] = cb(req, tt)
-  )
+  if server.shouldAcceptRequest():
+    waitFor server.acceptRequest(proc (req: Request): Future[void] = cb(req, tt,server))
 
 suite "tests the creation of a task queue":
   var tt = newTaskTable()
   let t1 = newTask(1,"test1")
   let t2 = newTask(2,"test2")
   let t3 = newTask(3,"test3")
-
-  var t: Thread[TaskTable]
-  createThread[TaskTable](t,serveTasks, tt)
+  let server = newAsyncHttpServer()
+  server.listen(Port(8080))
+  
+  # var t: Thread[TaskTable]
+  # createThread[TaskTable](t,serveTasks, tt)
 
   setup:
     addTask(tt,t1)
@@ -52,11 +50,15 @@ suite "tests the creation of a task queue":
   test "test task1":
     echo "test1"
     addTask(tt,t1)
+    serveTasks(tt,server)
 
   test "test task2":
     addTask(tt,t2)
-  
+    serveTasks(tt,server)
+
   test "test task3":
     addTask(tt,t3)
-  joinThread(t)
+    serveTasks(tt,server)
+
+  # joinThread(t)
   echo "suite teardown: run once after the tests"

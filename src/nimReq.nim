@@ -11,8 +11,8 @@ when isMainModule:
     echo task 
     let dec = task.fromFlatty(Task)
     
-    echo task.req
-    let body = Resp(taskId: task.taskId, resp: "Hello World")
+    echo dec.req
+    let body = Resp(taskId: dec.taskId, resp: "Hello World")
     
     let response = post(
         "http://127.0.0.1:8080",
