@@ -11,12 +11,12 @@ when isMainModule:
   while true:
     try: 
       echo "get task"
-      let task = fetch("http://127.0.0.1:8080")
+      let task = fetch("http://127.0.0.1:8080/")
       echo task 
       let dec = task.fromFlatty(Task)
       
       echo dec.req
-      let body = Resp(taskId: dec.taskId, resp: "Hello World")
+      let body = Resp(taskId: dec.taskId, resp: "COMPLETE")
     
       echo "post response"
       
@@ -25,11 +25,8 @@ when isMainModule:
           @[("Content-Type", "application/json")],
           toFlatty(body)
       )   
-      echo response.code
-      echo response.headers
-      echo response.body.len
     except PuppyError:
-      waitFor sleepAsync(500)
+      waitFor sleepAsync(1000)
       continue
 
    
