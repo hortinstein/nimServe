@@ -17,26 +17,23 @@ proc serveTasks(tt: TaskTable, server: AsyncHttpServer) {.thread.} =
         # If a task was returned
         if taskId != "":
           # Send the task data in the response
-          echo "sending taskId:",taskId
           await req.respond(Http200, toFlatty(tt.tasks[taskId]))
           # Mark the task as retrieved
           assert (tt.tasks[taskId].retrieved == true) 
         # If no tasks are available
         else:
-          echo "no tasks rdy"
           # Send an empty response
           await req.respond(Http200, "")
         return
     # If the request method is an HTTP POST
     of HttpPost:
       # If the request URL path is "/"
+      
       if req.url.path == "/":
         # Get the response data from the request body
         let resp = req.body.fromFlatty(Resp)
-        echo "resp: ", resp
         # Add the response to the task table
         addTaskResp(tt, resp)
-        echo tt.tasks
         # Send an empty response
         await req.respond(Http200, "")
         return
@@ -90,22 +87,27 @@ suite "tests the creation of a task queue":
   let t3 = newTask(3,"test3")
   let server = newAsyncHttpServer()
   server.listen(Port(8080))
-  addTask(tt,t1)
-  addTask(tt,t2)
-  addTask(tt,t3)    
-
+  
   # setup:
   # teardown:
 
   test "test task1":
-    echo "test1"
+    addTask(tt,t1)
     serveTasks(tt,server)
+    echo tt.tasks
 
   test "test task2":
+    addTask(tt,t2)
     serveTasks(tt,server)
-
+    echo tt.tasks
   test "test task3":
+    addTask(tt,t3)    
     serveTasks(tt,server)
+    echo tt.tasks
 
   # joinThread(t)
+  serveTasks(tt,server)
   echo "suite teardown: run once after the tests"
+  assert (tt.tasks[t1.taskId].resp == "COMPLETE")
+  assert (tt.tasks[t2.taskId].resp == "COMPLETE")
+  assert (tt.tasks[t3.taskId].resp == "COMPLETE")
