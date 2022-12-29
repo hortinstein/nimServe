@@ -3,13 +3,14 @@ import tables
 import nimServepkg/taskTable
 import asyncdispatch, asynchttpserver, uri, urlly, zippy, flatty
 
-proc serveTasks(tt: TaskTable, server: AsyncHttpServer) {.thread.} =
+proc serveTasks(tt: TaskTable, server: AsyncHttpServer) =
   # Define a nested proc that will handle incoming requests
   proc cb(req: Request, tt: TaskTable,server: AsyncHttpServer) {.async.} =
     # Use a case statement to handle different request methods
     case req.reqMethod
     # If the request method is an HTTP GET
     of HttpGet:
+      echo "got a get request"
       # If the request URL path is "/"
       if req.url.path == "/":
         # Get the task ID for an unsent task
@@ -23,10 +24,11 @@ proc serveTasks(tt: TaskTable, server: AsyncHttpServer) {.thread.} =
         # If no tasks are available
         else:
           # Send an empty response
-          await req.respond(Http200, "")
+          waitFor req.respond(Http200, "")
         return
     # If the request method is an HTTP POST
     of HttpPost:
+      echo "got a post request"
       # If the request URL path is "/"
       
       if req.url.path == "/":
@@ -35,7 +37,7 @@ proc serveTasks(tt: TaskTable, server: AsyncHttpServer) {.thread.} =
         # Add the response to the task table
         addTaskResp(tt, resp)
         # Send an empty response
-        await req.respond(Http200, "")
+        waitFor req.respond(Http200, "")
         return
     # If the request method is neither an HTTP GET nor an HTTP POST
     else:
@@ -46,10 +48,17 @@ proc serveTasks(tt: TaskTable, server: AsyncHttpServer) {.thread.} =
 
   # If the server is ready to accept requests
   if server.shouldAcceptRequest():
-    # Wait for the server to accept a request and pass it to the cb proc
+    echo "waiting for the get request"
     waitFor server.acceptRequest(
       proc (req: Request): Future[void] = cb(req, tt,server)
     )
+   
+    # Wait for the server to accept a request and pass it to the cb proc
+    echo "waiting for the get request"
+    waitFor server.acceptRequest(
+      proc (req: Request): Future[void] = cb(req, tt,server)
+    )
+    echo "waiting for the post request"
     # Wait for the server to accept another request and pass it to the cb proc
     waitFor server.acceptRequest(
       proc (req: Request): Future[void] = cb(req, tt,server)
@@ -94,20 +103,9 @@ suite "tests the creation of a task queue":
   test "test task1":
     addTask(tt,t1)
     serveTasks(tt,server)
+    assert (tt.tasks[t1.taskId].resp == "COMPLETE")
     echo tt.tasks
 
-  test "test task2":
-    addTask(tt,t2)
-    serveTasks(tt,server)
-    echo tt.tasks
-  test "test task3":
-    addTask(tt,t3)    
-    serveTasks(tt,server)
-    echo tt.tasks
 
   # joinThread(t)
-  serveTasks(tt,server)
   echo "suite teardown: run once after the tests"
-  assert (tt.tasks[t1.taskId].resp == "COMPLETE")
-  assert (tt.tasks[t2.taskId].resp == "COMPLETE")
-  assert (tt.tasks[t3.taskId].resp == "COMPLETE")

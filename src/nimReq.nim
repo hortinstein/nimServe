@@ -8,8 +8,8 @@ import nimServepkg/taskTable
 import asyncdispatch
 
 when isMainModule:
-  while true:
-    try: 
+  # while true:
+  #   try: 
       echo "get task"
       let task = fetch("http://127.0.0.1:8080/")
       echo task 
@@ -17,7 +17,7 @@ when isMainModule:
       
       echo dec.req
       let body = Resp(taskId: dec.taskId, resp: "COMPLETE")
-    
+      waitFor sleepAsync(1000)
       echo "post response"
       let response = post(
           "http://127.0.0.1:8080",
@@ -27,9 +27,9 @@ when isMainModule:
       echo response.code
       echo response.headers
       echo response.body.len
-    except PuppyError:
-      echo "error post/get"
-      waitFor sleepAsync(1000)
-      continue
+    # except PuppyError:
+    #   echo "error post/get"
+    #   waitFor sleepAsync(1000)
+    #   continue
 
    

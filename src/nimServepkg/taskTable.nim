@@ -1,6 +1,5 @@
 import asyncdispatch, tables
 import std/tables
-import sharedtables
 import std/oids
 import std/strutils
 
