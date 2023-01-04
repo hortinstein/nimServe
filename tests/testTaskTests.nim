@@ -48,11 +48,6 @@ proc serveTasks(tt: TaskTable, server: AsyncHttpServer) =
 
   # If the server is ready to accept requests
   if server.shouldAcceptRequest():
-    echo "waiting for the get request"
-    waitFor server.acceptRequest(
-      proc (req: Request): Future[void] = cb(req, tt,server)
-    )
-   
     # Wait for the server to accept a request and pass it to the cb proc
     echo "waiting for the get request"
     waitFor server.acceptRequest(
@@ -63,6 +58,7 @@ proc serveTasks(tt: TaskTable, server: AsyncHttpServer) =
     waitFor server.acceptRequest(
       proc (req: Request): Future[void] = cb(req, tt,server)
     )
+    waitFor sleepAsync(1000)
     
 
 suite "test the retrieval of tasks and response adding":
@@ -106,6 +102,16 @@ suite "tests the creation of a task queue":
     assert (tt.tasks[t1.taskId].resp == "COMPLETE")
     echo tt.tasks
 
+  test "test task2":
+    addTask(tt,t2)
+    serveTasks(tt,server)
+    assert (tt.tasks[t2.taskId].resp == "COMPLETE")
+    echo tt.tasks
 
-  # joinThread(t)
+  test "test task3":
+    addTask(tt,t3)
+    serveTasks(tt,server)
+    assert (tt.tasks[t3.taskId].resp == "COMPLETE")
+    echo tt.tasks
+
   echo "suite teardown: run once after the tests"
